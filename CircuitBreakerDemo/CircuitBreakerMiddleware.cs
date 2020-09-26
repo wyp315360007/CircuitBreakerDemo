@@ -12,7 +12,7 @@ using Polly.CircuitBreaker;
 namespace CircuitBreakerDemo
 {
     /// <summary>
-    /// net core 实现自定义熔断器中间件
+    /// net core 实现自定义断路器中间件
     /// </summary>
     public class CircuitBreakerMiddleware : IDisposable
     {
@@ -25,7 +25,7 @@ namespace CircuitBreakerDemo
         {
             this._next = next;
             this._logger = logger;
-            this._configuration = configuration; //未来url的熔断规则可以从config文件里读取，增加灵活性
+            this._configuration = configuration; //未来url的断路规则可以从config文件里读取，增加灵活性
             logger.LogInformation($"{nameof(CircuitBreakerMiddleware)}.Ctor()");
             this._asyncPolicyDict = new ConcurrentDictionary<string, AsyncPolicy>(Environment.ProcessorCount, 31);
         }
@@ -48,11 +48,11 @@ namespace CircuitBreakerDemo
                                                                                {
                                                                                    this._logger.LogError($"{key} => 进入打开状态，中断持续时长：{breakDelay}，错误信息：{exception.InnerException.Message}");
                                                                                },
-                                                                               onReset: context =>                           //熔断器关闭状态触发事件，断路器关闭
+                                                                               onReset: context =>                           //断路器关闭状态触发事件，断路器关闭
                                                                                {
                                                                                    this._logger.LogInformation($"{key} => 进入关闭状态，程序恢复正常使用");
                                                                                },
-                                                                               onHalfOpen: () =>                             //熔断器进入半打开状态触发事件，断路器准备再次尝试操作执行
+                                                                               onHalfOpen: () =>                             //断路器进入半打开状态触发事件，断路器准备再次尝试操作执行
                                                                                {
                                                                                    this._logger.LogInformation($"{key} => 进入半开状态，重新尝试接收请求");
                                                                                }
@@ -80,7 +80,7 @@ namespace CircuitBreakerDemo
             //    var actionName = controllerActionDescriptor.ActionName;
             //    if (string.Equals(controllerName, "WeatherForecast", StringComparison.OrdinalIgnoreCase)
             //        && string.Equals(actionName, "Test", StringComparison.OrdinalIgnoreCase))
-            //    {//针对某一个控制器的某一个action，单独设置熔断
+            //    {//针对某一个控制器的某一个action，单独设置断路
             //        await Policy.Handle<Exception>().CircuitBreakerAsync(3, TimeSpan.FromSeconds(10)).ExecuteAsync(async () => await this._next(context));
             //    }
             //    else
