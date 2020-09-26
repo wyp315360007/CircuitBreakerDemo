@@ -36,7 +36,7 @@ namespace CircuitBreakerDemo
             try
             {
                 await this._asyncPolicyDict.GetOrAdd(string.Concat(request.Method, request.GetEncodedPathAndQuery())
-                                                    , key => Policy.Handle<Exception>()
+                                                     , key => Policy.Handle<Exception>()
                                                                    .AdvancedCircuitBreakerAsync
                                                                    (
                                                                        //备注：20秒内，请求次数达到10次以上，失败率达到20%后开启断路器，断路器一旦被打开至少要保持5秒钟的打开状态。
