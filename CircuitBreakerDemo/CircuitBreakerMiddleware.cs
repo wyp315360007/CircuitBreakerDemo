@@ -15,7 +15,7 @@ using Microsoft.Extensions.Configuration;
 namespace CircuitBreakerDemo
 {
     /// <summary>
-    /// net core 下面定义熔断器中间件
+    /// net core 下面自定义熔断器中间件
     /// </summary>
     public class CircuitBreakerMiddleware : IDisposable
     {
@@ -48,9 +48,11 @@ namespace CircuitBreakerDemo
             }
             catch (BrokenCircuitException ex)
             {
-                this._logger.LogError($"Circuit Broken {nameof(BrokenCircuitException)} => Exception：{ex.Message}");
-                context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
-                await context.Response.WriteAsync("Circuit Broken o(╥﹏╥)o");
+                this._logger.LogError($"{nameof(BrokenCircuitException)}.InnerException.Message：{ex.InnerException.Message}");
+                var response = context.Response;
+                response.StatusCode = (int)HttpStatusCode.BadRequest;
+                response.ContentType = "text/plain; charset=utf-8";
+                await response.WriteAsync("Circuit Broken o(╥﹏╥)o");
             }
 
             //var endpoint = context.GetEndpoint();
