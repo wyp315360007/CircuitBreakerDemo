@@ -33,35 +33,34 @@ namespace CircuitBreakerDemo
         public async Task InvokeAsync(HttpContext context)
         {
             var request = context.Request;
-            var httpMethod = request.Method;
-            var pathAndQuery = request.GetEncodedPathAndQuery();
-            var asyncPolicy = this._asyncPolicyDict.GetOrAdd(string.Concat(httpMethod, pathAndQuery)
-                                                            , key => Policy.Handle<Exception>()
-                                                                           .AdvancedCircuitBreakerAsync
-                                                                           (
-                                                                               //备注：20秒内，请求次数达到10次以上，失败率达到20%后开启断路器，断路器一旦被打开至少要保持5秒钟的打开状态。
-                                                                               failureThreshold: 0.2D,                       //失败率达到20%熔断开启
-                                                                               minimumThroughput: 10,                        //最多调用10次
-                                                                               samplingDuration: TimeSpan.FromSeconds(20),   //评估故障持续时长20秒
-                                                                               durationOfBreak: TimeSpan.FromSeconds(5),     //恢复正常使用前电路保持打开状态的最少时长5秒
-                                                                               onBreak: (exception, breakDelay, context) =>  //断路器打开时触发事件，程序不能使用
-                                                                               {
-                                                                                   this._logger.LogError($"{key} => 进入打开状态，中断持续时长：{breakDelay}，错误信息：{exception.InnerException.Message}");
-                                                                               },
-                                                                               onReset: context =>                           //断路器关闭状态触发事件，断路器关闭
-                                                                               {
-                                                                                   this._logger.LogInformation($"{key} => 进入关闭状态，程序恢复正常使用");
-                                                                               },
-                                                                               onHalfOpen: () =>                             //断路器进入半打开状态触发事件，断路器准备再次尝试操作执行
-                                                                               {
-                                                                                   this._logger.LogInformation($"{key} => 进入半开状态，重新尝试接收请求");
-                                                                               }
-                                                                           )
-                                                            )
-                                                    ;
             try
             {
-                await asyncPolicy.ExecuteAsync(async () => await this._next(context));
+                await this._asyncPolicyDict.GetOrAdd(string.Concat(request.Method, request.GetEncodedPathAndQuery())
+                                                    , key => Policy.Handle<Exception>()
+                                                                   .AdvancedCircuitBreakerAsync
+                                                                   (
+                                                                       //备注：20秒内，请求次数达到10次以上，失败率达到20%后开启断路器，断路器一旦被打开至少要保持5秒钟的打开状态。
+                                                                       failureThreshold: 0.2D,                       //失败率达到20%熔断开启
+                                                                       minimumThroughput: 10,                        //最多调用10次
+                                                                       samplingDuration: TimeSpan.FromSeconds(20),   //评估故障持续时长20秒
+                                                                       durationOfBreak: TimeSpan.FromSeconds(5),     //恢复正常使用前电路保持打开状态的最少时长5秒
+                                                                       onBreak: (exception, breakDelay, context) =>  //断路器打开时触发事件，程序不能使用
+                                                                       {
+                                                                           var ex = exception.InnerException ?? exception;
+                                                                           this._logger.LogError($"{key} => 进入打开状态，中断持续时长：{breakDelay}，错误类型：{ex.GetType().Name}，信息：{ex.Message}");
+                                                                       },
+                                                                       onReset: context =>                           //断路器关闭状态触发事件，断路器关闭
+                                                                       {
+                                                                           this._logger.LogInformation($"{key} => 进入关闭状态，程序恢复正常使用");
+                                                                       },
+                                                                       onHalfOpen: () =>                             //断路器进入半打开状态触发事件，断路器准备再次尝试操作执行
+                                                                       {
+                                                                           this._logger.LogInformation($"{key} => 进入半开状态，重新尝试接收请求");
+                                                                       }
+                                                                   )
+                                                     )
+                                            .ExecuteAsync(async () => await this._next(context))
+                                            ;
             }
             catch (BrokenCircuitException exception)
             {
