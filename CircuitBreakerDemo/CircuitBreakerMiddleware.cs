@@ -1,21 +1,18 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Polly.CircuitBreaker;
-using Polly;
-using Microsoft.AspNetCore.Mvc.Controllers;
-using Microsoft.AspNetCore.Http.Extensions;
-using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Net;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using Polly;
+using Polly.CircuitBreaker;
 
 namespace CircuitBreakerDemo
 {
     /// <summary>
-    /// net core 下面自定义熔断器中间件
+    /// net core 实现自定义熔断器中间件
     /// </summary>
     public class CircuitBreakerMiddleware : IDisposable
     {
@@ -28,27 +25,47 @@ namespace CircuitBreakerDemo
         {
             this._next = next;
             this._logger = logger;
-            this._configuration = configuration;//未来url的熔断规则可以从config文件里读取，增加灵活性
-            logger.LogInformation($"{nameof(CircuitBreakerMiddleware)}.ctor()");
+            this._configuration = configuration; //未来url的熔断规则可以从config文件里读取，增加灵活性
+            logger.LogInformation($"{nameof(CircuitBreakerMiddleware)}.Ctor()");
             this._asyncPolicyDict = new ConcurrentDictionary<string, AsyncPolicy>(Environment.ProcessorCount, 31);
         }
 
         public async Task InvokeAsync(HttpContext context)
         {
             var request = context.Request;
-            string httpMethod = request.Method;
-            string pathAndQuery = request.GetEncodedPathAndQuery();
-            var asyncPolicy = this._asyncPolicyDict.GetOrAdd(string.Concat(httpMethod, pathAndQuery), key =>
-            {
-                return Policy.Handle<Exception>().CircuitBreakerAsync(3, TimeSpan.FromSeconds(10));
-            });
+            var httpMethod = request.Method;
+            var pathAndQuery = request.GetEncodedPathAndQuery();
+            var asyncPolicy = this._asyncPolicyDict.GetOrAdd(string.Concat(httpMethod, pathAndQuery)
+                                                            , key => Policy.Handle<Exception>()
+                                                                           .AdvancedCircuitBreakerAsync
+                                                                           (
+                                                                               //备注：20秒内，请求次数达到10次以上，失败率达到20%后开启断路器，断路器一旦被打开至少要保持5秒钟的打开状态。
+                                                                               failureThreshold: 0.2D,                       //失败率达到20%熔断开启
+                                                                               minimumThroughput: 10,                        //最多调用10次
+                                                                               samplingDuration: TimeSpan.FromSeconds(20),   //评估故障持续时长20秒
+                                                                               durationOfBreak: TimeSpan.FromSeconds(5),     //恢复正常使用前电路保持打开状态的最少时长5秒
+                                                                               onBreak: (exception, breakDelay, context) =>  //断路器打开时触发事件，程序不能使用
+                                                                               {
+                                                                                   this._logger.LogError($"{key} => 进入打开状态，中断持续时长：{breakDelay}，错误信息：{exception.InnerException.Message}");
+                                                                               },
+                                                                               onReset: context =>                           //熔断器关闭状态触发事件，断路器关闭
+                                                                               {
+                                                                                   this._logger.LogInformation($"{key} => 进入关闭状态，程序恢复正常使用");
+                                                                               },
+                                                                               onHalfOpen: () =>                             //熔断器进入半打开状态触发事件，断路器准备再次尝试操作执行
+                                                                               {
+                                                                                   this._logger.LogInformation($"{key} => 进入半开状态，重新尝试接收请求");
+                                                                               }
+                                                                           )
+                                                            )
+                                                    ;
             try
             {
                 await asyncPolicy.ExecuteAsync(async () => await this._next(context));
             }
-            catch (BrokenCircuitException ex)
+            catch (BrokenCircuitException exception)
             {
-                this._logger.LogError($"{nameof(BrokenCircuitException)}.InnerException.Message：{ex.InnerException.Message}");
+                this._logger.LogError($"{nameof(BrokenCircuitException)}.InnerException.Message：{exception.InnerException.Message}");
                 var response = context.Response;
                 response.StatusCode = (int)HttpStatusCode.BadRequest;
                 response.ContentType = "text/plain; charset=utf-8";
