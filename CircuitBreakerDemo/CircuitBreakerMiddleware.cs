@@ -17,7 +17,7 @@ namespace CircuitBreakerDemo
     public class CircuitBreakerMiddleware : IDisposable
     {
         private readonly RequestDelegate _next;
-        private readonly ConcurrentDictionary<string, AsyncPolicy> _asyncPolicyDict = null;
+        private readonly ConcurrentDictionary<string, AsyncPolicy> _asyncPolicyDict;
         private readonly ILogger<CircuitBreakerMiddleware> _logger;
         private readonly IConfiguration _configuration;
 
