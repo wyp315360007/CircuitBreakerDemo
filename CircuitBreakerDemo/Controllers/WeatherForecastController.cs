@@ -24,31 +24,15 @@ namespace CircuitBreakerDemo.Controllers
             this._logger = logger;
         }
 
-        [HttpGet]
-        public IEnumerable<WeatherForecast> Get()
-        {
-            if (_Random.Next(Summaries.Length) % 3 == 0)
-            {
-                throw new Exception("程序运行错误");
-            }
-
-            return Enumerable.Range(1, 5).Select(index => new WeatherForecast
-            {
-                Date = DateTime.Now.AddDays(index),
-                TemperatureC = _Random.Next(-20, 55),
-                Summary = Summaries[_Random.Next(Summaries.Length)]
-            })
-            .ToArray();
-        }
-
         [HttpGet("test")]
         public string Test()
         {
-            if (_Random.Next(Summaries.Length) % 3 == 0)
+            int index = _Random.Next(Summaries.Length);
+            if (index % 3 == 0)
             {
                 throw new Exception("程序运行错误");
             }
-            return Summaries[_Random.Next(Summaries.Length)];
+            return Summaries[index];
         }
     }
 }
