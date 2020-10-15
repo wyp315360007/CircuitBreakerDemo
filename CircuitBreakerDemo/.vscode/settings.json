@@ -1,0 +1,14 @@
+{
+    "editor.fontFamily": "Fira Code",
+    "editor.fontSize": 14,
+    "editor.fontLigatures": "true",
+    "editor.fontWeight": "normal",
+    "debug.console.fontFamily": "Fira Code,JetBrains Mono",
+    "scm.inputFontFamily": "Fira Code,JetBrains Mono",
+    "terminal.integrated.fontFamily": "Fira Code,JetBrains Mono",
+    "rest-client.fontFamily": "Fira Code,JetBrains Mono",
+    "rest-client.fontSize": 15,
+    "window.zoomLevel": 1.0,
+    "workbench.colorTheme": "Night Owl Light (No Italics)",
+    "workbench.tree.indent": 16
+}
