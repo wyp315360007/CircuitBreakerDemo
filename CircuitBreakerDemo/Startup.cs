@@ -31,7 +31,7 @@ namespace CircuitBreakerDemo
 
             app.UseRouting();
 
-            //必须在UseRouting下面，UseEndpoints上面。
+            //娉ㄦ剰浣嶇疆鍦≧outing涓嬮潰锛孶seEndpoints涓婇潰
             app.UseMiddleware<CircuitBreakerMiddleware>();
 
             app.UseEndpoints(endpoints =>
