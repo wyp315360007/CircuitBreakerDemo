@@ -10,5 +10,6 @@
     "rest-client.fontSize": 15,
     "window.zoomLevel": 1.0,
     "workbench.colorTheme": "Night Owl Light (No Italics)",
-    "workbench.tree.indent": 16
+    "workbench.tree.indent": 16,
+    "terminal.integrated.shell.windows": "C:\\Program Files\\Git\\bin\\bash.exe"
 }
