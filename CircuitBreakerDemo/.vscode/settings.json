@@ -1,5 +1,5 @@
 {
-    "editor.fontFamily": "Fira Code",
+    "editor.fontFamily": "JetBrains Mono",
     "editor.fontSize": 14,
     "editor.fontLigatures": "true",
     "editor.fontWeight": "normal",
@@ -9,7 +9,8 @@
     "rest-client.fontFamily": "Fira Code,JetBrains Mono",
     "rest-client.fontSize": 15,
     "window.zoomLevel": 1.0,
-    "workbench.colorTheme": "Night Owl Light (No Italics)",
+    "window.autoDetectColorScheme": true,
+    "workbench.colorTheme": "Night Owl (No Italics)",
     "workbench.tree.indent": 16,
     "terminal.integrated.shell.windows": "C:\\Program Files\\Git\\bin\\bash.exe"
 }
